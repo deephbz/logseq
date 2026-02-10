@@ -10,12 +10,14 @@
   (shell "yarn electron-watch"))
 
 (defn open-dev-electron-app
-  "Opens dev-electron-app when watch process has built main.js"
+  "Opens the Electron dev app when watch process has built main.js"
   []
   (let [start-time (java.time.Instant/now)]
     (dotimes [_n 1000]
              (if (and (fs/exists? "static/js/main.js")
                       (task-util/file-modified-later-than? "static/js/main.js" start-time))
-               (shell "yarn dev-electron-app")
+               ;; Run Electron Forge directly from static/.
+               ;; The root-level gulp wrapper can surface false-negative exit codes.
+               (shell "yarn --cwd static electron:dev")
                (println "Waiting for app to build..."))
              (Thread/sleep 1000))))

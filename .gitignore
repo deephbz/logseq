@@ -72,6 +72,7 @@ deps/publish/worker/.env*
 deps/db-sync/worker/.wrangler
 deps/db-sync/worker/dist
 deps/db-sync/worker/.env*
+deps/db-sync/worker/wrangler.personal.toml
 
 
 tx-log*
@@ -80,3 +81,7 @@ clj-e2e/e2e-dump
 .dir-locals.el
 .projectile
 deps/db-sync/data
+# bd worktree
+.agents/mvp-ui/
+# bd worktree
+.agents/mvp-auth/

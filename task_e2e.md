@@ -3,21 +3,44 @@
 ## Task (what you asked for)
 
 - Add a real end-to-end regression for: **delete local graph, download remote graph, assets are restored automatically** (no page visit required).
-- Demonstrate **fail pre-fix** (`a760ad40e^`) and **pass post-fix** (`a760ad40e`), using **two git worktrees**.
-- Rewrite history so the **E2E test commit lands immediately before `a760ad40e`**.
+- Demonstrate **fail pre-fix** and **pass post-fix**, using **two git worktrees**.
+- Rewrite history so the **E2E test commit lands immediately before the fix commit**.
 
-## Current progress
+## Status
 
-- Repo branch: `feat/worker-sync-personal-use`.
-- Worktrees exist under repo parent dir:
-  - `../logseq-wt-pre` (pre-fix baseline runs).
-  - `../logseq-wt-post` (post-fix runs).
-- E2E regression test exists (currently being stabilized):
-  - `clj-e2e/test/logseq/e2e/rtc_extra_part2_test.clj` (`asset-blocks-validate-after-init-downloaded-test`)
-  - Test asserts assets in **lightning-fs** (`window.pfs`) since `clj-e2e` runs the web build.
-  - Helper for listing/waiting assets:
-    - `clj-e2e/src/logseq/e2e/assets.clj`
-- Root cause uncovered while running the test: asset upload can race with asset file writes, leading to `ENOENT` in browser console logs (seen as `[frontend.handler.assets] {:read-asset ... ENOENT ...}`), and causing the test’s “asset is available on client2” precondition to fail.
+- Done, and verified with worktrees.
+
+## Key commits (rewritten history)
+
+- E2E regression test commit: `cedd4f7c9` (`test(e2e): assert assets restored after remote graph download`)
+- Fix commit: `892191903` (`fix(db-sync): restore missing assets after snapshot download`)
+  - This fix commit includes what used to be split across `a760ad40e` + `6ac18abcf` (squashed together during history rewrite).
+
+## Verification (two worktrees)
+
+Worktrees live under the repo parent dir:
+- `../logseq-wt-pre`
+- `../logseq-wt-post`
+
+### Pre-fix (fails)
+
+In `../logseq-wt-pre`:
+- `git checkout -f cedd4f7c9`
+- `clojure -M:cljs release db-worker`
+- `cd clj-e2e && bb run-rtc-extra-part2-asset-test`
+
+Observed failure (expected):
+- Asset only appears **after visiting the page** (`:reason :downloaded-only-after-page-visit`), meaning the download flow did not proactively restore missing assets.
+
+### Post-fix (passes)
+
+In `../logseq-wt-post`:
+- `git checkout -f 892191903`
+- `clojure -M:cljs release db-worker`
+- `cd clj-e2e && bb run-rtc-extra-part2-asset-test`
+
+Observed pass (expected):
+- Asset file exists in OPFS (`window.pfs`) after graph download, without requiring a page visit.
 
 ## Speedup changes (temporary but safe, env-gated)
 
@@ -41,13 +64,8 @@ Goal: make the red-green loop ~10x faster by avoiding:
   - Equivalent to setting the 3 env vars above and running the ns.
   - Implemented in `clj-e2e/bb.edn`.
 
-### Notes about reliability
+## Test design notes (important decisions)
 
-- Speed mode exposed a timing flake around opening the slash-command menu (`util/input-command` waiting `.ui__popover-content`). Next step is hardening `clj-e2e/src/logseq/e2e/util.clj` so fast mode does not introduce new flakes.
-
-## Next steps
-
-1) Stabilize the single asset restore E2E in fast mode (harden `util/input-command` and the asset upload step).
-2) Run `../logseq-wt-pre` and `../logseq-wt-post` to prove fail/pass at the right commits.
-3) Rebase to place the E2E commit immediately before `a760ad40e` (and squash/drop the noisy intermediate “fix(e2e)/fix(assets)” commits).
-
+- `clj-e2e` runs the web build, so assets live in OPFS (via `window.pfs`), not `~/logseq/graphs/...`.
+- The test calls `e2e-assets/clear-assets-dir!` (rimraf `/<graph>/assets`) after deleting the local graph, to emulate Electron’s “delete local graph directory” semantics.
+- The test uploads a unique temp `.txt` file each run to avoid asset dedup ("asset exists already") and to keep the regression deterministic.

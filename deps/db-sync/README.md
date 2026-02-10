@@ -13,12 +13,15 @@ It includes the Cloudflare Worker implementation and a Node.js adapter for self-
 
 ```bash
 cd deps/db-sync
-yarn watch
+yarn release
 
-# open another terminal
 cd deps/db-sync/worker
-wrangler dev
+wrangler d1 migrations apply logseq-sync-graph-meta-prod --local
+wrangler dev --local --var LOGSEQ_SYNC_AUTH_MODE:none
 ```
+
+`wrangler dev` defaults to Cognito-oriented auth unless you pass `LOGSEQ_SYNC_AUTH_MODE` as a Worker var binding.
+For Cognito mode, drop the `--var LOGSEQ_SYNC_AUTH_MODE:none` override.
 
 ### D1 Schema (Worker)
 

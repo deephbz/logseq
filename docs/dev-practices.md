@@ -473,7 +473,8 @@ In another window:
 cd static
 yarn
 cd ..
-yarn dev-electron-app
+cd static
+yarn electron:dev
 ```
 and kill all electron process
-Then a normal start happens via `yarn dev-electron-app`
+Then a normal start happens via `yarn electron:dev`

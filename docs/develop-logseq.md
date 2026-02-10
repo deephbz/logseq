@@ -95,11 +95,41 @@ yarn watch
 # Wait until watch reports `Build Completed.` for `:electron` and `:app`.
 # Then, run the following command in a different shell.
 # If you have opened desktop logseq, you should close it. Otherwise, this command will fail.
-yarn dev-electron-app
+cd static
+yarn electron:dev
 ```
+
+To pass Electron flags (example: remote debugging), see "Remote Debugging" below (you need `--` forwarding).
 
 Alternatively, run `bb dev:electron-start` to do this step with one command. To
 download bb, see https://github.com/babashka/babashka#installation.
+
+#### Remote Debugging (Chrome DevTools Attach)
+
+If you need to attach Chrome DevTools to the running Electron renderer (for example, to inspect `logseq.api.db.datascript_query` results), start Electron with a remote debugging port.
+
+From `static/`:
+
+```bash
+cd static
+# Yarn passes args to `electron-forge start`; you need two `--` separators to forward flags to Electron.
+yarn electron:dev -- -- --remote-debugging-port=9333
+```
+
+Or run `electron-forge` directly:
+
+```bash
+cd static
+./node_modules/.bin/electron-forge start -- --remote-debugging-port=9333
+```
+
+Then:
+
+```bash
+curl http://127.0.0.1:9333/json/list
+```
+
+In Chrome, open `chrome://inspect/#devices`, add `localhost:9333`, then click “inspect”.
 
 3. (Optional) Update dependencies if `resources/package.json` has changed since
    the last time you used dev Logseq.

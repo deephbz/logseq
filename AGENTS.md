@@ -26,6 +26,10 @@
 - Unit tests live in `src/test/` and should be runnable via `bb dev:lint-and-test`.
 - Name tests after their namespaces; use `-v` to target a specific test case.
 - Run lint/tests before submitting PRs; keep changes green.
+- For `clj-e2e` changes, prefer small edits and run a fast compile gate first (example: from `clj-e2e/`, run `bb rtc-extra-part2-test`) before the slower `bb run-rtc-extra-part2-test`.
+- When proving regressions across commits, prefer `git worktree` checkouts to avoid a dirty working tree and to make pre-fix vs post-fix results reproducible.
+- Keep E2E assertions deterministic and minimal (avoid switching assertion strategy mid-iteration unless necessary).
+- Remember: `clj-e2e` runs the web build. Files on disk like `~/logseq/graphs/...` are usually not observable there. Use browser-observable storage/APIs (for DB graphs, lightning-fs via `window.pfs`) when you need to assert asset presence.
 
 ## Commit & Pull Request Guidelines
 - Commit subjects are short and imperative; optional scope prefixes appear (e.g., `fix:` or `enhance(rtc):`).
