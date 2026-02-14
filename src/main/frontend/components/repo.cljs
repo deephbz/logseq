@@ -358,26 +358,33 @@
      {:class (when (<= (count repos) 1) "no-repos")}
      (header-fn)
      [:div.cp__repos-list-wrap
-      (for [{:keys [hr item hover-detail title options icon]} (items-fn)]
-        (let [on-click' (:on-click options)
-              href' (:href options)
-              menu-item (if (util/mobile?) ui/menu-link shui/dropdown-menu-item)]
-          (if hr
-            (if (util/mobile?) [:hr.py-2] (shui/dropdown-menu-separator))
-            (menu-item
-             (assoc options
-                    :title hover-detail
-                    :on-click (fn [^js e]
-                                (when on-click'
-                                  (when-not (false? (on-click' e))
-                                    (shui/popup-hide! contentid)))))
-             (or item
-                 (if href'
-                   [:a.flex.items-center.w-full
-                    {:href href' :on-click #(shui/popup-hide! contentid)
-                     :style {:color "inherit"}} title]
-                   [:span.flex.items-center.gap-1.w-full
-                    icon [:div title]]))))))]
+      (map-indexed
+       (fn [idx {:keys [hr item hover-detail title options icon]}]
+         (let [on-click' (:on-click options)
+               href' (:href options)
+               menu-item (if (util/mobile?) ui/menu-link shui/dropdown-menu-item)
+               item-key (if hr
+                          (str "separator-" idx)
+                          (or href' title (str "item-" idx)))]
+           (rum/with-key
+             (if hr
+               (if (util/mobile?) [:hr.py-2] (shui/dropdown-menu-separator))
+               (menu-item
+                (assoc options
+                       :title hover-detail
+                       :on-click (fn [^js e]
+                                   (when on-click'
+                                     (when-not (false? (on-click' e))
+                                       (shui/popup-hide! contentid)))))
+                (or item
+                    (if href'
+                      [:a.flex.items-center.w-full
+                       {:href href' :on-click #(shui/popup-hide! contentid)
+                        :style {:color "inherit"}} title]
+                      [:span.flex.items-center.gap-1.w-full
+                       icon [:div title]]))))
+             item-key)))
+       (items-fn))]
      (when footer?
        (repos-footer))]))
 
